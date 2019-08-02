@@ -9,4 +9,4 @@ This package was inspired by the need to sample the posterior distribution of a 
 Copy and paste the following: 
 
 library(devtools)
-install_github("A-Morariu/psmplr"))
+install_github("A-Morariu/psmplr")
