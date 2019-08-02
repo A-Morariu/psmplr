@@ -111,12 +111,3 @@ psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
         }
         return(paths)
 }
-
-
-ii = 2
-test <- PosteriorSampler(inla_object = inlarw1_configs,
-        index = ii,
-        effect_name = "u1",
-        n = 2, # n = number of paths
-        constraint_point = 1)
-dim(test) # Rows = random walk increments (cumsum to get the random walk), column = "time" index
