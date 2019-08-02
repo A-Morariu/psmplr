@@ -10,71 +10,113 @@
 #   Check Package:             'Cmd + Shift + E'
 #   Test Package:              'Cmd + Shift + T'
 
+library(MASS)
+library(Matrix)
+library(tidyverse)
+
 reID <- function(inla_object, re_name){
-     ### return the indicies (row and column index) of the sub-matrix
-     ### corresponding to the named random effect (ONLY works for 1 effect)
-     name <- grep(re_name,inla_object$misc$configs$contents$tag)
-     indicies <- seq(inla_object$misc$configs$contents$start[name],
-                     len = inla_object$misc$configs$contents$length[name])
+        ### return a vector of the indicies (row and column) of the sub-matrix
+        ### corresponding to the named random effect (ONLY works for 1 effect)
+        name <- grep(re_name,inla_object$misc$configs$contents$tag)
+        indicies <- seq(inla_object$misc$configs$contents$start[name],
+                len = inla_object$misc$configs$contents$length[name])
 
-     return(indicies)
+        return(indicies)
 }
 
-meanOffset <- function(re_id, inla_object){
-     ### returns the mean of the latent field from the inla_object
-     return(as.vector(inla_object$misc$configs$config[[1]]$mean)[re_id])
-}
+#meanOffset <- function(re_id, inla_object){
+#  ### returns the mean of the latent field from the inla_object
+#  return(as.vector(inla_object$misc$configs$config[[1]]$mean)[re_id])
+#}
 
 createTransform <- function(re_index, inla_object, constraint_point){
-     ### return the A matrix which selects the sub-matrix corresponding to
-     ### the named random effect while placing a constraint at a single
-     ### point in the walk
+        ### return the A matrix which selects the sub-matrix corresponding to
+        ### the named random effect while placing a constraint at a single
+        ### point in the walk
+        # Take the sub-matrix of Q that we want
+        # number of columns - length of indices (for the random effect of interest)
+        # number of rows - to match dimensions of Q (for multiplication)
 
-     dimension <- nrow(inla_object$misc$configs$config[[1]]$Q)
+        dimension <- nrow(inla_object$misc$configs$config[[1]]$Q)
 
-     ### Top
-     top_block <- Matrix::Matrix(0,
-                                 nrow = (min(re_index)-1),
-                                 ncol = length(re_index))
+        ### Top
+        top_block <- Matrix::Matrix(0,
+                nrow = (min(re_index)-1),
+                ncol = length(re_index))
 
-     ### Bottom
-     bot_block <- Matrix::Matrix(0,
-                                 nrow = (dimension - max(re_index)),
-                                 ncol = length(re_index))
+        ### Bottom
+        bot_block <- Matrix::Matrix(0,
+                nrow = (dimension - max(re_index)),
+                ncol = length(re_index))
 
-     ### Middle
-     if(is.null(constraint_point)){
-          mid_block <- Matrix::Diagonal(n = max(re_index) - min(re_index) + 1)
-     } else{
-          ### Middle
-          differencing_mat <- Matrix(0,
-                                     nrow = max(re_index) - min(re_index) + 1,
-                                     ncol = max(re_index) - min(re_index) + 1)
-          differencing_mat[,as.numeric(constraint_point)] <- 1
+        ### Middle
+        if(is.null(constraint_point)){
+                mid_block <- Matrix::Diagonal(n = max(re_index) - min(re_index) + 1)
+        } else{
+                ### Middle
+                differencing_mat <- Matrix(0,
+                        nrow = max(re_index) - min(re_index) + 1,
+                        ncol = max(re_index) - min(re_index) + 1)
+                differencing_mat[,as.numeric(constraint_point)] <- 1
 
-          # get +/- 1 entries on each row except in at entry
-          # [fixed_point, constraint_point] where we get a row of zeros
-          mid_block <- Matrix::Diagonal(n = max(re_index) - min(re_index) + 1) - differencing_mat
-     }
-     return(rbind(top_block, mid_block, bot_block))
+                # get +/- 1 entries on each row except in at entry
+                # [fixed_point, constraint_point] where we get a row of zeros
+                mid_block <- Matrix::Diagonal(n = max(re_index) - min(re_index) + 1) - differencing_mat
+        }
+        return(rbind(top_block, mid_block, bot_block))
 }
 
-PosteriorSampler <- function(inla_object, effect_name, n=1, constraint_point){
-     Amat <- inla_object %>%
-          reID("u1") %>%
-          createTransform(inla_object, constraint_point)
-
-     mean_vec <- as.vector(Matrix::crossprod(Amat,
-                                             as.matrix(inla_object$misc$configs$config[[1]]$mean)))
-
-     cov_mat <- new("dsCMatrix",
-                    x = inla_object$misc$configs$config[[1]]$Q@x,
-                    i = inla_object$misc$configs$config[[1]]$Q@i,
-                    p = inla_object$misc$configs$config[[1]]$Q@p,
-                    Dim = inla_object$misc$configs$config[[1]]$Q@Dim) %>%
-          Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
-          Matrix::solve(Amat) %>%
-          Matrix::crossprod()
-
-     MASS::mvrnorm(n=n, mu = mean_vec, Sigma = cov_mat)
+s.weights <- function(inla_object){
+        weights <- c()
+        for (i in 1:inla_object$misc$configs$nconfig) {
+                weights[i] <- inla_object$misc$configs$config[[i]]$log.posterior
+        }
+        return(exp(weights)/sum(exp(weights)))
 }
+
+PosteriorSampler <- function(inla_object, index = 1, effect_name, n=1, constraint_point=2){
+        Amat <- inla_object %>%
+                reID("u1") %>%
+                createTransform(inla_object, constraint_point)
+
+        mean_vec <- as.vector(Matrix::crossprod(Amat,
+                as.matrix(inla_object$misc$configs$config[[index]]$mean)))
+
+        # To bypass ForceSymmetric
+        # Cholesky is "slow"
+        cov_mat <- new("dsCMatrix",
+                x = inla_object$misc$configs$config[[index]]$Q@x,
+                i = inla_object$misc$configs$config[[index]]$Q@i,
+                p = inla_object$misc$configs$config[[index]]$Q@p,
+                Dim = inla_object$misc$configs$config[[index]]$Q@Dim) %>%
+                Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
+                Matrix::solve(Amat) %>%
+                Matrix::crossprod()
+
+        as.data.frame(MASS::mvrnorm(n=n, mu = mean_vec, Sigma = cov_mat))
+}
+
+psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
+        samp_size <- ceiling(s.weights(inla_object)*n)
+
+        paths <- list()
+        n.theta <- inla_object$misc$configs$nconfig
+
+        for (ii in 1:inla_object$misc$configs$nconfig) {
+                paths <- append(paths, PosteriorSampler(inla_object = inla_object,
+                        index = ii,
+                        effect_name = effect_name,
+                        n = samp_size[ii],
+                        constraint_point = constraint_point))
+        }
+        return(paths)
+}
+
+
+ii = 2
+test <- PosteriorSampler(inla_object = inlarw1_configs,
+        index = ii,
+        effect_name = "u1",
+        n = 2, # n = number of paths
+        constraint_point = 1)
+dim(test) # Rows = random walk increments (cumsum to get the random walk), column = "time" index
