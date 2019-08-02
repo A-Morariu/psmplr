@@ -76,7 +76,7 @@ s.weights <- function(inla_object){
 
 PosteriorSampler <- function(inla_object, index = 1, effect_name, n=1, constraint_point=2){
         Amat <- inla_object %>%
-                reID("u1") %>%
+                reID(effect_name) %>%
                 createTransform(inla_object, constraint_point)
 
         mean_vec <- as.vector(Matrix::crossprod(Amat,
@@ -111,3 +111,4 @@ psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
         }
         return(paths)
 }
+
