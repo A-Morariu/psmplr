@@ -14,7 +14,7 @@ library(MASS)
 library(Matrix)
 library(tidyverse)
 
-reID <- function(inla_object, re_name){
+reID <- function(inla_object, re_name){ ### FIX TO WHICH INSTEAD OF GREP
         ### return a vector of the indicies (row and column) of the sub-matrix
         ### corresponding to the named random effect (ONLY works for 1 effect)
         name <- grep(re_name,inla_object$misc$configs$contents$tag)
