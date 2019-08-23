@@ -120,6 +120,14 @@ makeAMat <- function(inla_model, effect_name, contraint_point = 2){
                 createTransform(inla_object, constraint_point))
 }
 
+s.weights <- function(inla_object){
+        weights <- c()
+        for (i in 1:inla_object$misc$configs$nconfig) {
+                weights[i] <- inla_object$misc$configs$config[[i]]$log.posterior
+        }
+        return(exp(weights)/sum(exp(weights)))
+}
+
 sampSizes <- function(inla_model, n = 1){
         return(ceiling(s.weights(inla_model)*n))
 }
