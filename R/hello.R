@@ -112,3 +112,30 @@ psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
         return(paths)
 }
 
+##### Helper functions #####
+
+makeAMat <- function(inla_model, effect_name, contraint_point = 2){
+        return(inla_model %>%
+                reID(effect_name) %>%
+                createTransform(inla_object, constraint_point))
+}
+
+sampSizes <- function(inla_model, n = 1){
+        return(ceiling(s.weights(inla_model)*n))
+}
+
+extractAllMeans <- function(inla_model){
+        return(purrr::map(inla_model$misc$configs$config, function(xx) xx$mean))
+}
+
+extractAllCovMat <- function(inla_model){
+        return(purrr::map(inla_model$misc$configs$config, function(xx) xx$Q))
+}
+
+extractEffectMeans <- function(mu, Amat){
+        return(as.vector(Matrix::crossprod(Amat,as.matrix(mu) ) ) )
+}
+
+extractEffectCovMat <- function(sigma, Amat){
+
+}
