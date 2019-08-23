@@ -131,7 +131,7 @@ s.weights <- function(inla_model){
 }
 
 sampSizes <- function(inla_model, n = 1){
-        return(ceiling(s.weights(inla_model)*n))
+        return(as.vector(ceiling(s.weights(inla_model)*n) ) )
 }
 
 # extract the necessary components for sampling from INLA model
@@ -161,11 +161,25 @@ extractEffectCovMat <- function(sigma, Amat){
                 Matrix::crossprod() )
 }
 
-#
+# parallel multiplications
 selectedMeans <- function(lst_of_means, Amat){
         return(purrr::map(lst_of_means, function(xx) extractEffectMeans(xx, Amat)))
 }
 
 selectedCovMat <- function(lst_of_cov, Amat){
         return(purrr::map(lst_of_cov, function(xx) extractEffectCovMat(xx, Amat)))
+}
+
+# sampling
+psmplr <- function(inla_model, effect_name, n = 1, constraint_point = 2){
+        # Part 1 - make the selection matrix
+        Amat <- makeAMat(inla_model, effect_name, constraint_point)
+
+        # Part 2 - arguments of MVN sampling function
+        n <- sampSizes(inla_model, n)
+        mu <- extractAllMeans(inla_model) %>% selectedMeans(Amat)
+        Sigma <- extractAllCovMat(inla_model) %>% selectedCovMat(Amat)
+
+        # Part 3 - perform sampling (NOTE: NO FORMATTING DONE YET)
+        MASS::mvrnorm(n = n, mu = mu, Sigma = Sigma)
 }
