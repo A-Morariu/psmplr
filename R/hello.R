@@ -14,12 +14,12 @@ library(MASS)
 library(Matrix)
 library(tidyverse)
 
-reID <- function(inla_object, re_name){ ### FIX TO WHICH INSTEAD OF GREP
+reID <- function(inla_model, re_name){ ### FIX TO WHICH INSTEAD OF GREP
         ### return a vector of the indicies (row and column) of the sub-matrix
         ### corresponding to the named random effect (ONLY works for 1 effect)
-        name <- grep(re_name,inla_object$misc$configs$contents$tag)
-        indicies <- seq(inla_object$misc$configs$contents$start[name],
-                len = inla_object$misc$configs$contents$length[name])
+        name <- grep(re_name,inla_model$misc$configs$contents$tag)
+        indicies <- seq(inla_model$misc$configs$contents$start[name],
+                len = inla_model$misc$configs$contents$length[name])
 
         return(indicies)
 }
@@ -29,7 +29,7 @@ reID <- function(inla_object, re_name){ ### FIX TO WHICH INSTEAD OF GREP
 #  return(as.vector(inla_object$misc$configs$config[[1]]$mean)[re_id])
 #}
 
-createTransform <- function(re_index, inla_object, constraint_point){
+createTransform <- function(re_index, inla_model, constraint_point){
         ### return the A matrix which selects the sub-matrix corresponding to
         ### the named random effect while placing a constraint at a single
         ### point in the walk
@@ -37,7 +37,7 @@ createTransform <- function(re_index, inla_object, constraint_point){
         # number of columns - length of indices (for the random effect of interest)
         # number of rows - to match dimensions of Q (for multiplication)
 
-        dimension <- nrow(inla_object$misc$configs$config[[1]]$Q)
+        dimension <- nrow(inla_model$misc$configs$config[[1]]$Q)
 
         ### Top
         top_block <- Matrix::Matrix(0,
@@ -114,16 +114,18 @@ psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
 
 ##### Helper functions #####
 
+# selection matrix
 makeAMat <- function(inla_model, effect_name, contraint_point = 2){
         return(inla_model %>%
                 reID(effect_name) %>%
-                createTransform(inla_object, constraint_point))
+                createTransform(inla_model, contraint_point))
 }
 
-s.weights <- function(inla_object){
+# sample size manipulation
+s.weights <- function(inla_model){
         weights <- c()
-        for (i in 1:inla_object$misc$configs$nconfig) {
-                weights[i] <- inla_object$misc$configs$config[[i]]$log.posterior
+        for (i in 1:inla_model$misc$configs$nconfig) {
+                weights[i] <- inla_model$misc$configs$config[[i]]$log.posterior
         }
         return(exp(weights)/sum(exp(weights)))
 }
@@ -132,6 +134,7 @@ sampSizes <- function(inla_model, n = 1){
         return(ceiling(s.weights(inla_model)*n))
 }
 
+# extract the necessary components for sampling from INLA model
 extractAllMeans <- function(inla_model){
         return(purrr::map(inla_model$misc$configs$config, function(xx) xx$mean))
 }
@@ -140,6 +143,7 @@ extractAllCovMat <- function(inla_model){
         return(purrr::map(inla_model$misc$configs$config, function(xx) xx$Q))
 }
 
+# keep heavy multiplication steps seperate
 extractEffectMeans <- function(mu, Amat){
         # takes in one mean vector and selects the bits we need based on the AMat
         return(as.vector(Matrix::crossprod(Amat,as.matrix(mu) ) ) )
@@ -154,5 +158,14 @@ extractEffectCovMat <- function(sigma, Amat){
                 Dim = sigma@Dim) %>%
                 Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
                 Matrix::solve(Amat) %>%
-                Matrix::crossprod())
+                Matrix::crossprod() )
+}
+
+#
+selectedMeans <- function(lst_of_means, Amat){
+        return(purrr::map(lst_of_means, function(xx) extractEffectMeans(xx, Amat)))
+}
+
+selectedCovMat <- function(lst_of_cov, Amat){
+        return(purrr::map(lst_of_cov, function(xx) extractEffectCovMat(xx, Amat)))
 }
