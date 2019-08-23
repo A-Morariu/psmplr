@@ -133,9 +133,18 @@ extractAllCovMat <- function(inla_model){
 }
 
 extractEffectMeans <- function(mu, Amat){
+        # takes in one mean vector and selects the bits we need based on the AMat
         return(as.vector(Matrix::crossprod(Amat,as.matrix(mu) ) ) )
 }
 
 extractEffectCovMat <- function(sigma, Amat){
-
+        # takes in one precision matrix and selects the submatrix we need based on the AMat
+        return(new("dsCMatrix",
+                x = sigma@x,
+                i = sigma@i,
+                p = sigma@p,
+                Dim = sigma@Dim) %>%
+                Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
+                Matrix::solve(Amat) %>%
+                Matrix::crossprod())
 }
