@@ -10,9 +10,9 @@
 #   Check Package:             'Cmd + Shift + E'
 #   Test Package:              'Cmd + Shift + T'
 
-library(MASS)
-library(Matrix)
-library(tidyverse)
+require(MASS)
+require(Matrix)
+require(tidyverse)
 
 reID <- function(inla_model, re_name){ ### FIX TO WHICH INSTEAD OF GREP
         ### return a vector of the indicies (row and column) of the sub-matrix
@@ -23,11 +23,6 @@ reID <- function(inla_model, re_name){ ### FIX TO WHICH INSTEAD OF GREP
 
         return(indicies)
 }
-
-#meanOffset <- function(re_id, inla_object){
-#  ### returns the mean of the latent field from the inla_object
-#  return(as.vector(inla_object$misc$configs$config[[1]]$mean)[re_id])
-#}
 
 createTransform <- function(re_index, inla_model, constraint_point){
         ### return the A matrix which selects the sub-matrix corresponding to
@@ -64,14 +59,6 @@ createTransform <- function(re_index, inla_model, constraint_point){
                 mid_block <- Matrix::Diagonal(n = max(re_index) - min(re_index) + 1) - differencing_mat
         }
         return(rbind(top_block, mid_block, bot_block))
-}
-
-s.weights <- function(inla_object){
-        weights <- c()
-        for (i in 1:inla_object$misc$configs$nconfig) {
-                weights[i] <- inla_object$misc$configs$config[[i]]$log.posterior
-        }
-        return(exp(weights)/sum(exp(weights)))
 }
 
 PosteriorSampler <- function(inla_object, index = 1, effect_name, n=1, constraint_point=2){
@@ -127,7 +114,7 @@ s.weights <- function(inla_model){
         for (i in 1:inla_model$misc$configs$nconfig) {
                 weights[i] <- inla_model$misc$configs$config[[i]]$log.posterior
         }
-        return(exp(weights)/sum(exp(weights)))
+        return(weights/sum(weights))
 }
 
 sampSizes <- function(inla_model, n = 1){
