@@ -61,44 +61,6 @@ createTransform <- function(re_index, inla_model, constraint_point){
         return(rbind(top_block, mid_block, bot_block))
 }
 
-PosteriorSampler <- function(inla_object, index = 1, effect_name, n=1, constraint_point=2){
-        Amat <- inla_object %>%
-                reID(effect_name) %>%
-                createTransform(inla_object, constraint_point)
-
-        mean_vec <- as.vector(Matrix::crossprod(Amat,
-                as.matrix(inla_object$misc$configs$config[[index]]$mean)))
-
-        # To bypass ForceSymmetric
-        # Cholesky is "slow"
-        cov_mat <- new("dsCMatrix",
-                x = inla_object$misc$configs$config[[index]]$Q@x,
-                i = inla_object$misc$configs$config[[index]]$Q@i,
-                p = inla_object$misc$configs$config[[index]]$Q@p,
-                Dim = inla_object$misc$configs$config[[index]]$Q@Dim) %>%
-                Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
-                Matrix::solve(Amat) %>%
-                Matrix::crossprod()
-
-        as.data.frame(MASS::mvrnorm(n=n, mu = mean_vec, Sigma = cov_mat))
-}
-
-psmplr <- function(inla_object, effect_name, n = 1, constraint_point = 2){
-        samp_size <- ceiling(s.weights(inla_object)*n)
-
-        paths <- list()
-        n.theta <- inla_object$misc$configs$nconfig
-
-        for (ii in 1:inla_object$misc$configs$nconfig) {
-                paths <- append(paths, PosteriorSampler(inla_object = inla_object,
-                        index = ii,
-                        effect_name = effect_name,
-                        n = samp_size[ii],
-                        constraint_point = constraint_point))
-        }
-        return(paths)
-}
-
 ##### Helper functions #####
 
 # selection matrix
