@@ -6,7 +6,8 @@ This package was inspired by the need to sample the posterior distribution of a 
 
 # How to install
 
-Copy and paste the following: 
+Copy and paste the following into your console: 
 
 library(devtools)
 install_github("A-Morariu/psmplr")
+
