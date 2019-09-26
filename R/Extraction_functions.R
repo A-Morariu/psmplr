@@ -4,13 +4,15 @@
 # as arguments for the sampling call
 #
 
+setwd("~/Downloads/Post_Sampler")
 source("Selection_matrix_construction.R")
 
 # selection matrix
-makeAMat <- function(inla_model, effect_name, contraint_point = 2){
+makeAMat <- function(inla_model, effect_name, 
+                     constraint_point = which(day_constraint == 1)){
         return(inla_model %>%
                         reID(effect_name) %>%
-                        createTransform(inla_model, contraint_point))
+                        createTransform(inla_model, constraint_point))
 }
 
 # sample size manipulation
@@ -41,14 +43,31 @@ extractEffectMeans <- function(mu, Amat){
         return(as.vector(Matrix::crossprod(Amat,as.matrix(mu) ) ) )
 }
 
-extractEffectCovMat <- function(sigma, Amat){
+extractEffectCovMat <- function(prec, Amat){
         # takes in one precision matrix and selects the submatrix we need based on the AMat
-        return(new("dsCMatrix",
-                x = sigma@x,
-                i = sigma@i,
-                p = sigma@p,
-                Dim = sigma@Dim) %>%
-                        Matrix::Cholesky(LDL = FALSE, perm = FALSE) %>%
-                        Matrix::solve(Amat) %>%
-                        Matrix::crossprod() )
+        new_matrix <- new( "dsCMatrix",
+                           x = prec@x,
+                           i = prec@i,
+                           p = prec@p,
+                           Dim = prec@Dim )  
+        new_matrix_chol <- Matrix::Cholesky(new_matrix, LDL = TRUE, perm = TRUE) 
+        
+        PA <- Matrix::solve(new_matrix_chol, Amat, system = "P")
+        LinvPA <- Matrix::solve(new_matrix_chol, PA, system = "L")
+        Dinvhalf <- Matrix::Diagonal( dim(new_matrix_chol)[1], 
+                                      1 / sqrt( new_matrix_chol@x[new_matrix_chol@p[1:nrow(new_matrix)]+1] ) )
+        DinvhalfLinvPA <- Dinvhalf %*% LinvPA
+        theVar <- Matrix::crossprod(DinvhalfLinvPA)
+        
+        return(theVar)
 }
+
+
+
+### A quick test 
+prec_mat_list <- extractAllCovMat(real_rw_model)
+prec <- prec_mat_list[[1]]
+Amat <- makeAMat(inla_model = real_rw_model, 
+                 effect_name = "day_count", 
+                 constraint_point = which(day_constraint == 1))
+# extractEffectCovMat(prec, Amat)
