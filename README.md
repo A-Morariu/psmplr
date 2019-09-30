@@ -10,6 +10,5 @@ Copy and paste the following into your console:
 
 ```r
 library(devtools)
-
 install_github("A-Morariu/psmplr")
 ```
