@@ -6,11 +6,6 @@
 # Main file containing computationally heavy multiplications and sampling calls
 #
 
-require(MASS)
-require(Matrix)
-require(tidyverse)
->>>>>>> 5a3852ade1b092a9d47f74b85fd79d0cb2ee9b74
-
 # parallel multiplications
 selectedMeans <- function(lst_of_means, Amat) {
     return(purrr::map(lst_of_means, function(xx) extractEffectMeans(xx, Amat)))
