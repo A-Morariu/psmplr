@@ -4,8 +4,6 @@
 # as arguments for the sampling call
 #
 
-source("Selection_matrix_construction.R")
-
 # selection matrix
 makeAMat <- function(inla_model, effect_name,
                      constraint_point = which(day_constraint == 1)){
