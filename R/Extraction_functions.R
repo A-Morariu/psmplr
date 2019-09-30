@@ -43,7 +43,7 @@ extractEffectCovMat <- function(prec, Amat) {
     LinvPA <- Matrix::solve(new_matrix_chol, PA, system = "L")
     Dinvhalf <- Matrix::Diagonal(dim(new_matrix_chol)[1], 1/sqrt(new_matrix_chol@x[new_matrix_chol@p[1:nrow(new_matrix)] +
         1]))
-    DinvhalfLinvPA <- Dinvhalf %*% LinvPA
+    DinvhalfLinvPA <- Matrix::crossprod(Dinvhalf, LinvPA)
     theVar <- Matrix::crossprod(DinvhalfLinvPA)
 
     return(theVar)

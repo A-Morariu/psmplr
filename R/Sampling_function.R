@@ -27,5 +27,4 @@ psmplr <- function(inla_model, effect_name, n = 1, constraint_point = 2) {
 
     # Part 3 - perform sampling (NOTE: NO FORMATTING DONE YET)
     purrr::map2(.x = mu, .y = Sigma, ~ MASS::mvrnorm(n = n, mu = .x, Sigma = .y))
-
 }
