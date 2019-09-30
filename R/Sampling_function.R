@@ -11,7 +11,6 @@ require(Matrix)
 require(tidyverse)
 
 source("Selection_matrix_contruction.R")
-
 source("Extraction_functions.R")
 
 # parallel multiplications
