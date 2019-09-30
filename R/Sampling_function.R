@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-### psmplr package ### Posterior distribution sampling framework created to take in an INLA
-### model and output a sample to mimic all configurations of the model Main file containing
-### computationally heavy multiplications and sampling calls
-=======
 ### psmplr package ###
 #
 # Posterior distribution sampling framework created to take in an INLA model
