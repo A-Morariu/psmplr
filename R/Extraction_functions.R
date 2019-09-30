@@ -48,20 +48,3 @@ extractEffectCovMat <- function(prec, Amat) {
 
     return(theVar)
 }
-
-
-
-### A quick test
-<<<<<<< HEAD
-prec_mat_list <- extractAllCovMat(real_rw_model)
-prec <- prec_mat_list[[1]]
-Amat <- makeAMat(inla_model = real_rw_model, effect_name = "day_count", constraint_point = which(day_constraint ==
-    1))
-=======
-# prec_mat_list <- extractAllCovMat(real_rw_model)
-# prec <- prec_mat_list[[1]]
-# Amat <- makeAMat(inla_model = real_rw_model,
-#                 effect_name = "day_count",
-#                 constraint_point = which(day_constraint == 1))
->>>>>>> 5a3852ade1b092a9d47f74b85fd79d0cb2ee9b74
-# extractEffectCovMat(prec, Amat)
