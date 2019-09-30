@@ -1,8 +1,6 @@
 ### Extraction Code ### Set of functions used to extract information from INLA which will be
 ### used as arguments for the sampling call
 
-source("Selection_matrix_construction.R")
-
 # selection matrix
 makeAMat <- function(inla_model, effect_name, constraint_point = which(day_constraint == 1)) {
     return(inla_model %>% reID(effect_name) %>% createTransform(inla_model, constraint_point))
@@ -54,8 +52,16 @@ extractEffectCovMat <- function(prec, Amat) {
 
 
 ### A quick test
+<<<<<<< HEAD
 prec_mat_list <- extractAllCovMat(real_rw_model)
 prec <- prec_mat_list[[1]]
 Amat <- makeAMat(inla_model = real_rw_model, effect_name = "day_count", constraint_point = which(day_constraint ==
     1))
+=======
+# prec_mat_list <- extractAllCovMat(real_rw_model)
+# prec <- prec_mat_list[[1]]
+# Amat <- makeAMat(inla_model = real_rw_model,
+#                 effect_name = "day_count",
+#                 constraint_point = which(day_constraint == 1))
+>>>>>>> 5a3852ade1b092a9d47f74b85fd79d0cb2ee9b74
 # extractEffectCovMat(prec, Amat)

@@ -8,6 +8,7 @@ This package was inspired by the need to sample the posterior distribution of a 
 
 Copy and paste the following into your console: 
 
-library(devtools) \\
+```r
+library(devtools)
 install_github("A-Morariu/psmplr")
-
+```

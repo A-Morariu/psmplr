@@ -1,6 +1,20 @@
+<<<<<<< HEAD
 ### psmplr package ### Posterior distribution sampling framework created to take in an INLA
 ### model and output a sample to mimic all configurations of the model Main file containing
 ### computationally heavy multiplications and sampling calls
+=======
+### psmplr package ###
+#
+# Posterior distribution sampling framework created to take in an INLA model
+# and output a sample to mimic all configurations of the model
+#
+# Main file containing computationally heavy multiplications and sampling calls
+#
+
+require(MASS)
+require(Matrix)
+require(tidyverse)
+>>>>>>> 5a3852ade1b092a9d47f74b85fd79d0cb2ee9b74
 
 # parallel multiplications
 selectedMeans <- function(lst_of_means, Amat) {
